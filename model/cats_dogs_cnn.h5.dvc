@@ -1,0 +1,5 @@
+outs:
+- md5: 12f8ee0e88eec881f800736d3863ee23
+  size: 134076192
+  hash: md5
+  path: cats_dogs_cnn.h5
