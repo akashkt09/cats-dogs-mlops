@@ -1,4 +1,3 @@
-# app/main.py
 """FastAPI service for cats vs dogs image classification."""
 
 import io
@@ -12,10 +11,18 @@ import tensorflow as tf
 app = FastAPI(title="Cats vs Dogs Classifier")
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "cats_dogs_cnn.h5")
-model = tf.keras.models.load_model(MODEL_PATH)
-
 IMG_SIZE = (224, 224)
 CLASS_NAMES = {0: "cat", 1: "dog"}
+
+_model = None
+
+
+def get_model():
+    """Lazily load the model on first use, not at import time."""
+    global _model
+    if _model is None:
+        _model = tf.keras.models.load_model(MODEL_PATH)
+    return _model
 
 
 def preprocess_image(image_bytes: bytes) -> np.ndarray:
@@ -38,6 +45,7 @@ async def predict(file: UploadFile = File(...)):
     try:
         image_bytes = await file.read()
         img_array = preprocess_image(image_bytes)
+        model = get_model()
 
         prob_dog = float(model.predict(img_array, verbose=0)[0][0])
         prob_cat = 1.0 - prob_dog
