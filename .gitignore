@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+app/cats_dogs_cnn.h5
+.DS_Store
+**/.DS_Store
