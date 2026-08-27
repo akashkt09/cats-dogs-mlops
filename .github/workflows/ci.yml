@@ -42,6 +42,7 @@ jobs:
       - name: Install DVC with Google Drive support
         run: |
           pip install "dvc[gdrive]"
+          pip install --upgrade pyopenssl cryptography
 
       - name: Pull model from DVC remote
         env:
