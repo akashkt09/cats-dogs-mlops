@@ -20,7 +20,7 @@ jobs:
         run: |
           kubectl apply -f deployment/k8s-manifest.yaml
           kubectl rollout restart deployment cats-dogs-api
-          kubectl rollout status deployment cats-dogs-api --timeout=180s
+          kubectl rollout status deployment cats-dogs-api --timeout=600s
 
       - name: Wait for service to be ready
         run: sleep 15
