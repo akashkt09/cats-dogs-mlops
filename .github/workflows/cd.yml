@@ -32,7 +32,7 @@ jobs:
       - name: Smoke test - prediction call
         run: |
           curl -f -X POST http://localhost:8080/predict \
-            -F "file=@data/test_set/test_set/cats/cat.4001.jpg" || exit 1
+            -F "file=@tests/sample_images/sample_cat.jpg" || exit 1
 
       - name: Smoke test result
         run: echo "Smoke tests passed — deployment verified"
