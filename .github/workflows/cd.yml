@@ -1,0 +1,38 @@
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types:
+      - completed
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to local Kubernetes
+        run: |
+          kubectl apply -f deployment/k8s-manifest.yaml
+          kubectl rollout restart deployment cats-dogs-api
+          kubectl rollout status deployment cats-dogs-api --timeout=180s
+
+      - name: Wait for service to be ready
+        run: sleep 15
+
+      - name: Smoke test - health check
+        run: |
+          curl -f http://localhost:8080/health || exit 1
+
+      - name: Smoke test - prediction call
+        run: |
+          curl -f -X POST http://localhost:8080/predict \
+            -F "file=@data/test_set/test_set/cats/cat.4001.jpg" || exit 1
+
+      - name: Smoke test result
+        run: echo "Smoke tests passed — deployment verified"
