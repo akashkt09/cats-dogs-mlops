@@ -2,6 +2,10 @@
 
 import io
 import os
+import time
+import logging
+from collections import defaultdict
+
 import numpy as np
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
@@ -9,6 +13,23 @@ from PIL import Image
 import tensorflow as tf
 
 app = FastAPI(title="Cats vs Dogs Classifier")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    handlers=[
+        logging.FileHandler('api_requests.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger('cats-dogs-api')
+
+metrics = {
+    'total_requests': 0,
+    'prediction_counts': defaultdict(int),
+    'total_response_time_ms': 0.0,
+    'errors': 0,
+}
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "cats_dogs_cnn.h5")
 IMG_SIZE = (224, 224)
@@ -18,7 +39,6 @@ _model = None
 
 
 def get_model():
-    """Lazily load the model on first use, not at import time."""
     global _model
     if _model is None:
         _model = tf.keras.models.load_model(MODEL_PATH)
@@ -37,9 +57,28 @@ def health():
     return {"status": "healthy"}
 
 
+@app.get("/metrics")
+def get_metrics():
+    avg_response_time = (
+        metrics['total_response_time_ms'] / metrics['total_requests']
+        if metrics['total_requests'] > 0 else 0
+    )
+    return {
+        'total_requests': metrics['total_requests'],
+        'errors': metrics['errors'],
+        'prediction_distribution': dict(metrics['prediction_counts']),
+        'average_response_time_ms': round(avg_response_time, 2)
+    }
+
+
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    if not file.content_type.startswith("image/"):
+    start_time = time.time()
+    metrics['total_requests'] += 1
+
+    if not file.content_type or not file.content_type.startswith("image/"):
+        metrics['errors'] += 1
+        logger.warning(f"Rejected upload with content_type={file.content_type}")
         raise HTTPException(status_code=400, detail="File must be an image")
 
     try:
@@ -52,9 +91,19 @@ async def predict(file: UploadFile = File(...)):
 
         prediction = 1 if prob_dog > 0.5 else 0
         confidence = prob_dog if prediction == 1 else prob_cat
+        label = CLASS_NAMES[prediction]
+
+        response_time_ms = (time.time() - start_time) * 1000
+        metrics['prediction_counts'][label] += 1
+        metrics['total_response_time_ms'] += response_time_ms
+
+        logger.info(
+            f"Prediction served | filename={file.filename} content_type={file.content_type} "
+            f"prediction={label} confidence={confidence:.4f} response_time_ms={response_time_ms:.2f}"
+        )
 
         return JSONResponse({
-            "prediction": CLASS_NAMES[prediction],
+            "prediction": label,
             "confidence": round(confidence, 4),
             "probabilities": {
                 "cat": round(prob_cat, 4),
@@ -62,4 +111,6 @@ async def predict(file: UploadFile = File(...)):
             }
         })
     except Exception as e:
+        metrics['errors'] += 1
+        logger.error(f"Prediction failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
