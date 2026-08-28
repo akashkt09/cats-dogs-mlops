@@ -27,7 +27,7 @@ cats-dogs-mlops/
 ├── deployment/
 │   └── k8s-manifest.yaml    # Kubernetes Deployment + Service
 ├── model/
-│   ├── cats_dogs_cnn.h5     # Trained CNN
+│   ├── cats_dogs_cnn.h5     # Trained CNN (excluded from submission zip — see note below)
 │   └── cats_dogs_cnn.h5.dvc
 ├── notebooks/
 │   └── cats_dogs_training.ipynb   # EDA, training, MLflow logging (run on Colab)
@@ -44,6 +44,15 @@ cats-dogs-mlops/
 ├── requirements.txt
 └── README.md
 ```
+
+**Note on the submission zip:** the trained model file (`model/cats_dogs_cnn.h5`,
+~128MB) is excluded from the submission zip to stay within the size limit. It
+is:
+- Available in the GitHub repository (pulled via `dvc pull`, see Setup below)
+- Included as a real artifact inside the Docker image pushed to
+  `ghcr.io/akashkt09/cats-dogs-mlops`, which is what the deployed Kubernetes
+  service actually runs
+- Demonstrated live in the video walkthrough
 
 ---
 
