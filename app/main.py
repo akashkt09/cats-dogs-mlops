@@ -114,3 +114,4 @@ async def predict(file: UploadFile = File(...)):
         metrics['errors'] += 1
         logger.error(f"Prediction failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+# demo trigger Fri Aug 28 15:03:50 IST 2026
