@@ -5,7 +5,7 @@ BITS Pilani WILP
 Submitted by: Akash Kumar (2024AC05843)
 
 **Repository:** https://github.com/akashkt09/cats-dogs-mlops
-**Video walkthrough:** _[add link here once uploaded]_
+**Video walkthrough:** https://drive.google.com/file/d/1JKue9VL1rzvDEXmIhiagS8SNA1g2bnmD/view?usp=share_link
 
 An end-to-end MLOps pipeline for a binary image classifier (cats vs dogs) built
 for a pet adoption platform use case — covering model development, experiment
